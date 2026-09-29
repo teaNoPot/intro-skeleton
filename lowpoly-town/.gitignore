@@ -1,0 +1,7 @@
+# Godot 4 generates these; don't commit them
+.godot/
+*.translation
+export_presets.cfg
+
+# sample models used by automated tests (not part of the game)
+tests/fixtures/

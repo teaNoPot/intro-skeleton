@@ -1,0 +1,96 @@
+[gd_scene load_steps=16 format=3]
+
+[ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
+[ext_resource type="Script" path="res://scripts/day_night.gd" id="2_daynight"]
+[ext_resource type="Script" path="res://scripts/greybox_town.gd" id="3_town"]
+[ext_resource type="Script" path="res://scripts/npc_spawner.gd" id="4_spawner"]
+[ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="5_player"]
+[ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="6_hud"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_sky"]
+sky_top_color = Color(0.31, 0.56, 0.88, 1)
+sky_horizon_color = Color(0.74, 0.85, 0.94, 1)
+ground_bottom_color = Color(0.3, 0.34, 0.38, 1)
+ground_horizon_color = Color(0.74, 0.85, 0.94, 1)
+sun_angle_max = 20.0
+
+[sub_resource type="Sky" id="Sky_main"]
+sky_material = SubResource("ProceduralSkyMaterial_sky")
+
+[sub_resource type="Environment" id="Environment_main"]
+background_mode = 2
+sky = SubResource("Sky_main")
+ambient_light_source = 3
+ambient_light_sky_contribution = 0.5
+tonemap_mode = 2
+tonemap_white = 3.0
+ssao_enabled = true
+ssao_radius = 1.2
+ssao_intensity = 1.6
+glow_enabled = true
+glow_intensity = 0.25
+glow_hdr_threshold = 1.5
+fog_enabled = true
+fog_light_color = Color(0.74, 0.85, 0.94, 1)
+fog_density = 0.0035
+fog_aerial_perspective = 0.3
+adjustment_enabled = true
+adjustment_saturation = 1.2
+adjustment_contrast = 1.05
+
+[sub_resource type="NavigationMesh" id="NavigationMesh_town"]
+geometry_parsed_geometry_type = 1
+agent_height = 1.75
+agent_radius = 0.5
+agent_max_climb = 0.25
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_ground"]
+size = Vector3(240, 2, 240)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ground"]
+albedo_color = Color(0.5, 0.68, 0.4, 1)
+roughness = 1.0
+
+[sub_resource type="BoxMesh" id="BoxMesh_ground"]
+material = SubResource("StandardMaterial3D_ground")
+size = Vector3(240, 2, 240)
+
+[node name="Main" type="Node3D"]
+script = ExtResource("1_main")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_main")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.5, 0.866, 0, -0.866, 0.5, 0, 30, 0)
+light_color = Color(1, 0.96, 0.88, 1)
+shadow_enabled = true
+directional_shadow_max_distance = 90.0
+
+[node name="DayNight" type="Node" parent="." node_paths=PackedStringArray("sun", "environment")]
+script = ExtResource("2_daynight")
+sun = NodePath("../Sun")
+environment = NodePath("../WorldEnvironment")
+
+[node name="NavigationRegion3D" type="NavigationRegion3D" parent="."]
+navigation_mesh = SubResource("NavigationMesh_town")
+
+[node name="Ground" type="StaticBody3D" parent="NavigationRegion3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, 0)
+
+[node name="Collision" type="CollisionShape3D" parent="NavigationRegion3D/Ground"]
+shape = SubResource("BoxShape3D_ground")
+
+[node name="Mesh" type="MeshInstance3D" parent="NavigationRegion3D/Ground"]
+mesh = SubResource("BoxMesh_ground")
+
+[node name="Town" type="Node3D" parent="NavigationRegion3D"]
+script = ExtResource("3_town")
+
+[node name="NPCs" type="Node3D" parent="."]
+script = ExtResource("4_spawner")
+
+[node name="Player" parent="." instance=ExtResource("5_player")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+
+[node name="HUD" parent="." instance=ExtResource("6_hud")]
